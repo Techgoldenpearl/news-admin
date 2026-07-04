@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { sitesApi, mediaApi } from "@/lib/api";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Upload } from "lucide-react";
+import { ArrowLeft, Save, Upload, X } from "lucide-react";
 
 export default function EditSitePage() {
   const { id } = useParams();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     name: "", slug: "", domain: "", subdomain: "", description: "",
     language: "hi", region: "", logoUrl: "", faviconUrl: "",
@@ -49,6 +50,31 @@ export default function EditSitePage() {
   const updateTheme = (key: string, value: string) => setForm({ ...form, theme: { ...form.theme, [key]: value } });
   const updateSocial = (key: string, value: string) => setForm({ ...form, socialLinks: { ...form.socialLinks, [key]: value } });
   const updateSeo = (key: string, value: string) => setForm({ ...form, seoDefaults: { ...form.seoDefaults, [key]: value } });
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("File too large (max 10MB)"); return; }
+    setUploading(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const res = await mediaApi.upload({ base64, fileName: file.name, mimeType: file.type });
+      setForm((prev) => ({ ...prev, logoUrl: res.data.url }));
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div>
@@ -127,9 +153,35 @@ export default function EditSitePage() {
         {/* Branding */}
         <div className="bg-white rounded-xl border p-5 space-y-4">
           <h3 className="font-semibold">Branding</h3>
-          <div><label className="block text-sm font-medium mb-1">Logo URL</label>
-            <input value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })} placeholder="https://..." className="w-full px-3 py-2 border rounded-lg" /></div>
-          {form.logoUrl && <img src={form.logoUrl} alt="Logo" className="h-12 object-contain" />}
+          <div>
+            <label className="block text-sm font-medium mb-1">Logo</label>
+            {form.logoUrl ? (
+              <div className="relative inline-block">
+                <img src={form.logoUrl} alt="Logo" className="h-16 object-contain border rounded-lg p-2" />
+                <button type="button" onClick={() => setForm({ ...form, logoUrl: "" })}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600">
+                  <X size={12} />
+                </button>
+              </div>
+            ) : uploading ? (
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-blue-600 mb-2" />
+                <span className="text-sm text-blue-600">Uploading...</span>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition">
+                <Upload size={24} className="text-gray-400 mb-2" />
+                <span className="text-sm text-gray-600 font-medium">Click to upload</span>
+                <span className="text-xs text-gray-400 mt-1">PNG, JPG, WebP (max 10MB)</span>
+                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+              </label>
+            )}
+            <div className="mt-2">
+              <p className="text-xs text-gray-400 mb-1">Or paste image URL:</p>
+              <input value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-xs" placeholder="https://example.com/logo.png" />
+            </div>
+          </div>
           <div><label className="block text-sm font-medium mb-1">Favicon URL</label>
             <input value={form.faviconUrl} onChange={(e) => setForm({ ...form, faviconUrl: e.target.value })} className="w-full px-3 py-2 border rounded-lg" /></div>
         </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { sitesApi } from "@/lib/api";
-import { Plus, Pencil, Globe } from "lucide-react";
+import { Plus, Globe, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SitesPage() {
@@ -23,6 +23,15 @@ export default function SitesPage() {
       setForm({ name: "", slug: "", domain: "", language: "hi", region: "", description: "" });
       fetch();
     } catch { toast.error("Failed to create site"); }
+  };
+
+  const handleDelete = async (site: any) => {
+    if (!confirm(`Delete "${site.name}"? This cannot be undone.`)) return;
+    try {
+      await sitesApi.delete(site.id);
+      toast.success("Site deleted");
+      fetch();
+    } catch { toast.error("Failed to delete site"); }
   };
 
   return (
@@ -53,12 +62,17 @@ export default function SitesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sites.map((s) => (
           <div key={s.id} className="bg-white rounded-xl shadow-sm border p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-blue-100 rounded-lg"><Globe size={20} className="text-blue-600" /></div>
-              <div>
-                <h3 className="font-semibold">{s.name}</h3>
-                <p className="text-xs text-gray-400">{s.domain || s.slug}</p>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg"><Globe size={20} className="text-blue-600" /></div>
+                <div>
+                  <h3 className="font-semibold">{s.name}</h3>
+                  <p className="text-xs text-gray-400">{s.domain || s.slug}</p>
+                </div>
               </div>
+              <button onClick={() => handleDelete(s)} title="Delete site" className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                <Trash2 size={16} />
+              </button>
             </div>
             <div className="text-sm text-gray-500 space-y-1">
               <p>Language: {s.language} · Region: {s.region || "—"}</p>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminApi, analyticsApi } from "@/lib/api";
-import { BarChart3, TrendingUp, Eye, Users, FileText, Megaphone } from "lucide-react";
+import { BarChart3, TrendingUp, Eye, Users, FileText, Megaphone, IndianRupee } from "lucide-react";
 
 interface Stats {
   totalArticles: number; publishedArticles: number; draftArticles: number;
@@ -49,10 +49,14 @@ function BarChartSimple({ data, label }: { data: { name: string; value: number }
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [adAnalytics, setAdAnalytics] = useState<any[]>([]);
+  const [totalAdRevenue, setTotalAdRevenue] = useState(0);
 
   useEffect(() => {
     adminApi.stats().then((r) => setStats(r.data)).catch(console.error);
-    analyticsApi.adAnalytics({ days: 30 }).then((r) => setAdAnalytics(r.data.zoneSummary || [])).catch(() => {});
+    analyticsApi.adAnalytics({ days: 30 }).then((r) => {
+      setAdAnalytics(r.data.zoneSummary || []);
+      setTotalAdRevenue(r.data.totalRevenue || 0);
+    }).catch(() => {});
   }, []);
 
   if (!stats) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-blue-600" /></div>;
@@ -78,6 +82,12 @@ export default function AnalyticsPage() {
         <MetricCard icon={Users} label="Total Users" value={stats.totalUsers} color="bg-purple-500" />
         <MetricCard icon={Eye} label="Active Subscriptions" value={stats.activeSubscriptions} color="bg-green-500" />
         <MetricCard icon={Megaphone} label="Active Ads" value={stats.activeAds} color="bg-orange-500" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <MetricCard icon={IndianRupee} label="Est. Ad Revenue (30d)" value={`₹${totalAdRevenue.toLocaleString()}`} color="bg-teal-600" />
+        <MetricCard icon={Eye} label="Total Impressions (30d)" value={adAnalytics.reduce((s, d) => s + Number(d.impressions || 0), 0).toLocaleString()} color="bg-cyan-600" />
+        <MetricCard icon={TrendingUp} label="Total Clicks (30d)" value={adAnalytics.reduce((s, d) => s + Number(d.clicks || 0), 0).toLocaleString()} color="bg-violet-600" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -109,6 +119,7 @@ export default function AnalyticsPage() {
             <div className="flex justify-between"><span className="text-gray-500">Active Ads</span><span className="font-medium">{stats.activeAds}</span></div>
             <div className="flex justify-between"><span className="text-gray-500">Pending Requests</span><span className="font-medium text-yellow-600">{stats.pendingAdRequests}</span></div>
             <div className="flex justify-between"><span className="text-gray-500">Total Impressions</span><span className="font-medium">{adData.reduce((s, d) => s + d.value, 0).toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Est. Revenue (30d)</span><span className="font-medium text-teal-600">₹{totalAdRevenue.toLocaleString()}</span></div>
           </div>
         </div>
 
@@ -121,6 +132,31 @@ export default function AnalyticsPage() {
               <span className="font-medium">{stats.totalUsers > 0 ? ((stats.activeSubscriptions / stats.totalUsers) * 100).toFixed(1) : 0}%</span></div>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl border overflow-hidden mt-8">
+        <h3 className="font-semibold p-5 pb-0">Ad Revenue by Zone (30 days)</h3>
+        <table className="w-full text-sm mt-4">
+          <thead className="bg-gray-50 border-b"><tr>
+            <th className="text-left px-5 py-3 font-medium">Zone</th>
+            <th className="text-left px-5 py-3 font-medium">Impressions</th>
+            <th className="text-left px-5 py-3 font-medium">Clicks</th>
+            <th className="text-left px-5 py-3 font-medium">CTR</th>
+            <th className="text-left px-5 py-3 font-medium">Est. Revenue</th>
+          </tr></thead>
+          <tbody>
+            {adAnalytics.map((z: any) => (
+              <tr key={z.zone} className="border-b hover:bg-gray-50">
+                <td className="px-5 py-3 font-mono text-xs text-gray-600">{z.zone}</td>
+                <td className="px-5 py-3">{Number(z.impressions).toLocaleString()}</td>
+                <td className="px-5 py-3">{Number(z.clicks).toLocaleString()}</td>
+                <td className="px-5 py-3">{z.ctr ?? 0}%</td>
+                <td className="px-5 py-3 font-medium text-teal-600">₹{Number(z.revenue ?? 0).toLocaleString()}</td>
+              </tr>
+            ))}
+            {adAnalytics.length === 0 && <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400">No ad activity yet</td></tr>}
+          </tbody>
+        </table>
       </div>
     </div>
   );

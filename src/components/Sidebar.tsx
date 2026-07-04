@@ -6,7 +6,7 @@ import {
   LayoutDashboard, FileText, FolderOpen, Image, Users, MessageSquare,
   Megaphone, Newspaper, Globe, CreditCard, Shield, Settings, LogOut,
   PenTool, BarChart3, Layout, BookOpen, Camera, Radio, Star,
-  Menu, ChevronLeft, Tag, Heart,
+  Menu, ChevronLeft, Tag, Heart, Layers,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useState } from "react";
@@ -26,6 +26,7 @@ const navSections = [
       { href: "/media", label: "Media Library", icon: Image },
       { href: "/web-stories", label: "Web Stories", icon: BookOpen },
       { href: "/photo-galleries", label: "Photo Galleries", icon: Camera },
+      { href: "/epaper", label: "E-Paper", icon: Layers },
       { href: "/live-blogs", label: "Live Blogs", icon: Radio },
       { href: "/rashifal", label: "Rashifal", icon: Star },
     ],

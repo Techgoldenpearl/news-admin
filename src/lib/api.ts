@@ -127,6 +127,9 @@ export const adsApi = {
     api.patch(`/ads/admin/requests/${id}/approve`),
   rejectRequest: (id: number, adminNote: string) =>
     api.patch(`/ads/admin/requests/${id}/reject`, { adminNote }),
+  revenueConfig: () => api.get("/ads/revenue-config"),
+  updateRevenueConfig: (zone: string, cpmRate: number, cpcRate: number) =>
+    api.put("/ads/revenue-config", { zone, cpmRate, cpcRate }),
 };
 
 // Membership
@@ -194,6 +197,26 @@ export const classifiedsApi = {
   createPackage: (data: any) => api.post("/classifieds/admin/packages", data),
   updatePackage: (id: number, data: any) => api.put(`/classifieds/admin/packages/${id}`, data),
   deletePackage: (id: number) => api.delete(`/classifieds/admin/packages/${id}`),
+};
+
+// E-Paper
+export const epaperApi = {
+  list: (params?: Record<string, any>) => api.get("/epaper/admin/list", { params }),
+  get: (id: number) => api.get(`/epaper/admin/${id}`),
+  create: (data: any) => api.post("/epaper/admin", data),
+  update: (id: number, data: any) => api.put(`/epaper/admin/${id}`, data),
+  delete: (id: number) => api.delete(`/epaper/admin/${id}`),
+  addPages: (id: number, pages: any[]) => api.post(`/epaper/admin/${id}/pages`, { pages }),
+  reorderPages: (id: number, pages: { id: number; pageNumber: number }[]) =>
+    api.put(`/epaper/admin/${id}/pages/reorder`, { pages }),
+  deletePage: (pageId: number) => api.delete(`/epaper/admin/pages/${pageId}`),
+  getEditions: (siteId: number) => api.get("/epaper/admin/editions", { params: { siteId } }),
+  uploadPdf: (formData: FormData) =>
+    api.post("/epaper/admin/upload-pdf", formData, { headers: { "Content-Type": "multipart/form-data" } }),
+  processingStatus: (id: number) => api.get(`/epaper/admin/${id}/processing-status`),
+  listRegions: (pageId: number) => api.get(`/epaper/admin/pages/${pageId}/regions`),
+  addRegion: (pageId: number, data: any) => api.post(`/epaper/admin/pages/${pageId}/regions`, data),
+  deleteRegion: (regionId: number) => api.delete(`/epaper/admin/regions/${regionId}`),
 };
 
 // Shok Sandesh
