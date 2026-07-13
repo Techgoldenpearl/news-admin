@@ -101,6 +101,10 @@ export default function AdsPage() {
     try { await adsApi.approveAdvertiser(id); toast.success("Approved"); fetchAll(); }
     catch { toast.error("Failed to approve"); }
   };
+  const suspendAdvertiser = async (id: number) => {
+    try { await adsApi.suspendAdvertiser(id); toast.success("Suspended"); fetchAll(); }
+    catch { toast.error("Failed to suspend"); }
+  };
   const approveRequest = async (id: number) => {
     try { await adsApi.approveRequest(id); toast.success("Approved"); fetchAll(); }
     catch { toast.error("Failed to approve"); }
@@ -251,8 +255,16 @@ export default function AdsPage() {
                 <tr key={a.id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{a.companyName}</td><td className="px-4 py-3">{a.contactName}</td>
                   <td className="px-4 py-3 text-gray-500">{a.email}</td>
-                  <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs ${a.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{a.status}</span></td>
-                  <td className="px-4 py-3">{a.status === "pending" && <button onClick={() => approveAdvertiser(a.id)} className="text-green-600 text-sm hover:underline">Approve</button>}</td>
+                  <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs ${a.status === "active" ? "bg-green-100 text-green-700" : a.status === "suspended" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>{a.status}</span></td>
+                  <td className="px-4 py-3">
+                    {a.status === "active" ? (
+                      <button onClick={() => suspendAdvertiser(a.id)} className="text-red-500 text-sm hover:underline">De-active</button>
+                    ) : (
+                      <button onClick={() => approveAdvertiser(a.id)} className="text-green-600 text-sm hover:underline">
+                        {a.status === "suspended" ? "Activate" : "Approve"}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -121,6 +121,8 @@ export const adsApi = {
     api.get("/ads/admin/advertisers", { params }),
   approveAdvertiser: (id: number) =>
     api.patch(`/ads/admin/advertisers/${id}/approve`),
+  suspendAdvertiser: (id: number) =>
+    api.patch(`/ads/admin/advertisers/${id}/suspend`),
   adRequests: (params?: Record<string, any>) =>
     api.get("/ads/admin/requests", { params }),
   approveRequest: (id: number) =>
