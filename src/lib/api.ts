@@ -137,11 +137,14 @@ export const adsApi = {
 // Membership
 export const membershipApi = {
   plans: () => api.get("/membership/plans"),
+  adminPlans: () => api.get("/membership/admin/plans"),
   createPlan: (data: any) => api.post("/membership/admin/plans", data),
   updatePlan: (id: number, data: any) =>
     api.put(`/membership/admin/plans/${id}`, data),
   deletePlan: (id: number) => api.delete(`/membership/admin/plans/${id}`),
   subscriptions: () => api.get("/membership/admin/subscriptions"),
+  setSubscriptionActive: (id: number, active: boolean) =>
+    api.patch(`/membership/admin/subscriptions/${id}`, { active }),
 };
 
 // Tags
