@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { shokSandeshApi } from "@/lib/api";
+import { shokSandeshApi, statesApi, citiesApi } from "@/lib/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, Check, X, Pencil, Trash2, Search, Eye, Heart } from "lucide-react";
@@ -38,6 +38,19 @@ export default function ShokSandeshPage() {
     message: "", messageHindi: "", eventDetails: "", eventDetailsHindi: "",
     eventDate: "", eventPlace: "", deceasedPhoto: "", isHomepage: false,
   });
+  const [states, setStates] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+
+  useEffect(() => { statesApi.list().then((r) => setStates(r.data)).catch(() => {}); }, []);
+
+  useEffect(() => {
+    const matchedState = states.find((s) => s.name === form.state);
+    if (matchedState) {
+      citiesApi.list({ stateId: matchedState.id }).then((r) => setCities(r.data)).catch(() => {});
+    } else {
+      setCities([]);
+    }
+  }, [form.state, states]);
 
   const loadItems = () => {
     shokSandeshApi.list({ page, limit: 20, status: status || undefined, type: typeFilter || undefined, search: search || undefined })
@@ -232,11 +245,21 @@ export default function ShokSandeshPage() {
               <div><label className="block text-sm font-medium mb-1">Place</label>
                 <input value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
               </div>
-              <div><label className="block text-sm font-medium mb-1">City</label>
-                <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
-              </div>
               <div><label className="block text-sm font-medium mb-1">State</label>
-                <input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                <select value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value, city: "" })} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="">Select state</option>
+                  {states.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div><label className="block text-sm font-medium mb-1">City</label>
+                <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-3 py-2 border rounded-lg" disabled={!form.state}>
+                  <option value="">Select city</option>
+                  {cities.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

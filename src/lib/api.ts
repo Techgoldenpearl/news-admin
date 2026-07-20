@@ -52,6 +52,23 @@ export const categoriesApi = {
   delete: (id: number) => api.delete(`/categories/${id}`),
 };
 
+// States & Cities
+export const statesApi = {
+  list: (params?: Record<string, any>) =>
+    api.get("/locations/states", { params }),
+  create: (data: any) => api.post("/locations/states", data),
+  update: (id: number, data: any) => api.put(`/locations/states/${id}`, data),
+  delete: (id: number) => api.delete(`/locations/states/${id}`),
+};
+
+export const citiesApi = {
+  list: (params?: Record<string, any>) =>
+    api.get("/locations/cities", { params }),
+  create: (data: any) => api.post("/locations/cities", data),
+  update: (id: number, data: any) => api.put(`/locations/cities/${id}`, data),
+  delete: (id: number) => api.delete(`/locations/cities/${id}`),
+};
+
 // Media
 export const mediaApi = {
   list: (params?: Record<string, any>) =>

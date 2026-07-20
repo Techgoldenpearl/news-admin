@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { articlesApi, categoriesApi, tagsApi, mediaApi, sitesApi } from "@/lib/api";
+import { articlesApi, categoriesApi, tagsApi, mediaApi, sitesApi, statesApi, citiesApi } from "@/lib/api";
 import { RichTextEditor } from "./RichTextEditor";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Eye, Upload, X } from "lucide-react";
@@ -55,6 +55,8 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
   const [categories, setCategories] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [sitesList, setSitesList] = useState<any[]>([]);
+  const [states, setStates] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"content" | "seo" | "settings">("content");
@@ -63,6 +65,7 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
     categoriesApi.list({ activeOnly: "false" }).then((r) => setCategories(r.data));
     tagsApi.list().then((r) => setTags(r.data));
     sitesApi.list().then((r) => setSitesList(r.data)).catch(() => {});
+    statesApi.list().then((r) => setStates(r.data)).catch(() => {});
 
     if (articleId) {
       articlesApi.list({ limit: 100 }).then((r) => {
@@ -90,6 +93,15 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
       });
     }
   }, [articleId]);
+
+  useEffect(() => {
+    const matchedState = states.find((s) => s.name === form.state);
+    if (matchedState) {
+      citiesApi.list({ stateId: matchedState.id }).then((r) => setCities(r.data)).catch(() => {});
+    } else {
+      setCities([]);
+    }
+  }, [form.state, states]);
 
   const generateSlug = (title: string) => {
     return title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
@@ -319,13 +331,23 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                  <input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="e.g. Uttar Pradesh" />
+                  <select value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value, city: "" })}
+                    className="w-full px-3 py-2 border rounded-lg">
+                    <option value="">Select state</option>
+                    {states.map((s) => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                  <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg" placeholder="e.g. Lucknow" />
+                  <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg" disabled={!form.state}>
+                    <option value="">Select city</option>
+                    {cities.map((c) => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div>

@@ -9,7 +9,7 @@ import { format } from "date-fns";
 export default function LiveBlogsPage() {
   const [articleId, setArticleId] = useState("");
   const [blog, setBlog] = useState<any>(null);
-  const [entry, setEntry] = useState({ content: "", isKey: false });
+  const [entry, setEntry] = useState({ content: "", isHighlight: false });
   const [articles, setArticles] = useState<any[]>([]);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function LiveBlogsPage() {
       const res = await liveBlogsApi.create(parseInt(articleId));
       setBlog(res.data);
       toast.success("Live blog started");
-    } catch { toast.error("Failed to start"); }
+    } catch (err: any) { toast.error(err.response?.data?.error || "Failed to start"); }
   };
 
   const addEntry = async () => {
@@ -37,7 +37,7 @@ export default function LiveBlogsPage() {
     try {
       await liveBlogsApi.addEntry(blog.id, entry);
       toast.success("Entry added");
-      setEntry({ content: "", isKey: false });
+      setEntry({ content: "", isHighlight: false });
       loadBlog(blog.articleId);
     } catch { toast.error("Failed"); }
   };
@@ -87,7 +87,7 @@ export default function LiveBlogsPage() {
                   <textarea value={entry.content} onChange={(e) => setEntry({ ...entry, content: e.target.value })}
                     rows={3} placeholder="Write a live update..." className="w-full px-3 py-2 border rounded-lg mb-2" />
                   <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={entry.isKey} onChange={(e) => setEntry({ ...entry, isKey: e.target.checked })} className="w-4 h-4 rounded" /> Key update</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={entry.isHighlight} onChange={(e) => setEntry({ ...entry, isHighlight: e.target.checked })} className="w-4 h-4 rounded" /> Key update</label>
                     <button onClick={addEntry} disabled={!entry.content.trim()} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"><Send size={14} /> Post Update</button>
                   </div>
                 </div>
@@ -97,7 +97,7 @@ export default function LiveBlogsPage() {
             {/* Entries */}
             <div className="space-y-3">
               {(blog.entries || []).map((e: any) => (
-                <div key={e.id} className={`bg-white rounded-xl border p-4 ${e.isKey ? "border-l-4 border-l-red-500" : ""}`}>
+                <div key={e.id} className={`bg-white rounded-xl border p-4 ${e.isHighlight ? "border-l-4 border-l-red-500" : ""}`}>
                   <p className="text-sm whitespace-pre-wrap">{e.content}</p>
                   <p className="text-xs text-gray-400 mt-2">{e.postedAt ? format(new Date(e.postedAt), "dd MMM yyyy, HH:mm:ss") : ""}</p>
                 </div>
