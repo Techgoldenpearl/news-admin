@@ -52,6 +52,15 @@ export const categoriesApi = {
   delete: (id: number) => api.delete(`/categories/${id}`),
 };
 
+// Website Categories (per-site category display overrides)
+export const websiteCategoriesApi = {
+  list: (categoryId: number) => api.get(`/categories/${categoryId}/websites`),
+  upsert: (categoryId: number, siteId: number, data: any) =>
+    api.put(`/categories/${categoryId}/websites/${siteId}`, data),
+  remove: (categoryId: number, siteId: number) =>
+    api.delete(`/categories/${categoryId}/websites/${siteId}`),
+};
+
 // States & Cities
 export const statesApi = {
   list: (params?: Record<string, any>) =>

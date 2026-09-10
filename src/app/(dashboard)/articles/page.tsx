@@ -96,6 +96,7 @@ export default function ArticlesPage() {
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Title</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600">Site</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Category</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Views</th>
@@ -112,6 +113,7 @@ export default function ArticlesPage() {
                     {a.title}
                   </Link>
                 </td>
+                <td className="px-4 py-3 text-gray-500">{a.siteNames || a.siteName || "—"}</td>
                 <td className="px-4 py-3 text-gray-500">{a.categoryName || "—"}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -154,7 +156,7 @@ export default function ArticlesPage() {
               </tr>
             ))}
             {!loading && articles.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-gray-400">
+              <tr><td colSpan={8} className="px-4 py-12 text-center text-gray-400">
                 No articles found. <Link href="/articles/new" className="text-blue-600 hover:underline">Create your first article</Link>
               </td></tr>
             )}

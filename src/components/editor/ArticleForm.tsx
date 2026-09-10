@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { articlesApi, categoriesApi, tagsApi, mediaApi, sitesApi, statesApi, citiesApi } from "@/lib/api";
 import { RichTextEditor } from "./RichTextEditor";
+import { MultiSelectChips } from "./MultiSelectChips";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Eye, Upload, X } from "lucide-react";
 
@@ -18,7 +19,7 @@ interface FormData {
   summary: string;
   content: string;
   categoryId: string;
-  siteId: string;
+  siteIds: number[];
   contentType: string;
   videoUrl: string;
   videoType: string;
@@ -28,9 +29,8 @@ interface FormData {
   isTrending: boolean;
   isFeatured: boolean;
   isPremium: boolean;
-  isGlobal: boolean;
-  state: string;
-  city: string;
+  stateId: string;
+  cityId: string;
   metaTitle: string;
   metaDescription: string;
   ogImage: string;
@@ -41,11 +41,11 @@ interface FormData {
 
 const defaultForm: FormData = {
   title: "", titleHindi: "", slug: "", summary: "", content: "",
-  categoryId: "", siteId: "", contentType: "article",
+  categoryId: "", siteIds: [], contentType: "article",
   videoUrl: "", videoType: "none", thumbnailUrl: "",
   status: "draft", isBreaking: false, isTrending: false,
-  isFeatured: false, isPremium: false, isGlobal: false,
-  state: "", city: "", metaTitle: "", metaDescription: "",
+  isFeatured: false, isPremium: false,
+  stateId: "", cityId: "", metaTitle: "", metaDescription: "",
   ogImage: "", readTimeMinutes: "", scheduledAt: "", tagIds: [],
 };
 
@@ -73,17 +73,20 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
         if (!article) return;
         articlesApi.get(article.slug).then((res) => {
           const a = res.data;
+          const firstLocation = a.locationIds?.[0];
           setForm({
             title: a.title || "", titleHindi: a.titleHindi || "",
             slug: a.slug || "", summary: a.summary || "",
             content: a.content || "", categoryId: String(a.categoryId || ""),
-            siteId: String(a.siteId || ""), contentType: a.contentType || "article",
+            siteIds: a.siteIds?.length ? a.siteIds : (a.siteId ? [a.siteId] : []),
+            contentType: a.contentType || "article",
             videoUrl: a.videoUrl || "", videoType: a.videoType || "none",
             thumbnailUrl: a.thumbnailUrl || "", status: a.status || "draft",
             isBreaking: a.isBreaking || false, isTrending: a.isTrending || false,
             isFeatured: a.isFeatured || false, isPremium: a.isPremium || false,
-            isGlobal: a.isGlobal || false, state: a.state || "",
-            city: a.city || "", metaTitle: a.metaTitle || "",
+            stateId: firstLocation?.stateId ? String(firstLocation.stateId) : "",
+            cityId: firstLocation?.cityId ? String(firstLocation.cityId) : "",
+            metaTitle: a.metaTitle || "",
             metaDescription: a.metaDescription || "", ogImage: a.ogImage || "",
             readTimeMinutes: String(a.readTimeMinutes || ""),
             scheduledAt: a.scheduledAt ? new Date(a.scheduledAt).toISOString().slice(0, 16) : "",
@@ -95,13 +98,12 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
   }, [articleId]);
 
   useEffect(() => {
-    const matchedState = states.find((s) => s.name === form.state);
-    if (matchedState) {
-      citiesApi.list({ stateId: matchedState.id }).then((r) => setCities(r.data)).catch(() => {});
+    if (form.stateId) {
+      citiesApi.list({ stateId: form.stateId }).then((r) => setCities(r.data)).catch(() => {});
     } else {
       setCities([]);
     }
-  }, [form.state, states]);
+  }, [form.stateId]);
 
   const generateSlug = (title: string) => {
     return title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
@@ -159,25 +161,29 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
     const isPublishing = (submitStatus || form.status) === "published";
     if (isPublishing && !form.content.trim()) { toast.error("Content is required to publish"); return; }
     if (isPublishing && !form.categoryId) { toast.error("Category is required to publish"); return; }
+    if (isPublishing && form.siteIds.length === 0) { toast.error("Select at least one site to publish"); return; }
 
     setSaving(true);
     try {
+      const { stateId, cityId, tagIds, siteIds, ...rest } = form;
       const payload: any = {
-        ...form,
+        ...rest,
         categoryId: parseInt(form.categoryId),
-        siteId: form.siteId ? parseInt(form.siteId) : null,
         readTimeMinutes: form.readTimeMinutes ? parseInt(form.readTimeMinutes) : null,
         scheduledAt: form.scheduledAt ? new Date(form.scheduledAt) : null,
         status: submitStatus || form.status,
+        siteIds,
+        locationIds: (stateId || cityId) ? [{
+          stateId: stateId ? parseInt(stateId) : null,
+          cityId: cityId ? parseInt(cityId) : null,
+        }] : [],
       };
 
-      delete payload.tagIds;
-
       if (articleId) {
-        await articlesApi.update(articleId, { ...payload, tagIds: form.tagIds });
+        await articlesApi.update(articleId, { ...payload, tagIds });
         toast.success("Article updated");
       } else {
-        await articlesApi.create({ ...payload, tagIds: form.tagIds });
+        await articlesApi.create({ ...payload, tagIds });
         toast.success("Article created");
       }
       router.push("/articles");
@@ -194,6 +200,15 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
       tagIds: prev.tagIds.includes(tagId)
         ? prev.tagIds.filter((id) => id !== tagId)
         : [...prev.tagIds, tagId],
+    }));
+  };
+
+  const toggleSite = (siteId: number) => {
+    setForm((prev) => ({
+      ...prev,
+      siteIds: prev.siteIds.includes(siteId)
+        ? prev.siteIds.filter((id) => id !== siteId)
+        : [...prev.siteIds, siteId],
     }));
   };
 
@@ -331,21 +346,21 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                  <select value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value, city: "" })}
+                  <select value={form.stateId} onChange={(e) => setForm({ ...form, stateId: e.target.value, cityId: "" })}
                     className="w-full px-3 py-2 border rounded-lg">
                     <option value="">Select state</option>
                     {states.map((s) => (
-                      <option key={s.id} value={s.name}>{s.name}</option>
+                      <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                  <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg" disabled={!form.state}>
+                  <select value={form.cityId} onChange={(e) => setForm({ ...form, cityId: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg" disabled={!form.stateId}>
                     <option value="">Select city</option>
                     {cities.map((c) => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
+                      <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
                 </div>
@@ -361,7 +376,6 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
                   { key: "isTrending", label: "Trending" },
                   { key: "isFeatured", label: "Featured" },
                   { key: "isPremium", label: "Premium (Members Only)" },
-                  { key: "isGlobal", label: "Show on All Sites" },
                 ].map(({ key, label }) => (
                   <label key={key} className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={(form as any)[key]}
@@ -389,23 +403,16 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
             </select>
           </div>
 
-          {/* Site */}
+          {/* Sites */}
           <div className="bg-white rounded-xl border p-5">
-            <h3 className="font-semibold mb-3">Publish to Site *</h3>
-            <select value={form.siteId} onChange={(e) => setForm({ ...form, siteId: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg">
-              <option value="">Select site</option>
-              {sitesList.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.language === "hi" ? "Hindi" : "English"})
-                </option>
-              ))}
-            </select>
-            {form.siteId && (
-              <p className="text-xs text-gray-400 mt-2">
-                {sitesList.find((s) => String(s.id) === form.siteId)?.region || ""}
-              </p>
-            )}
+            <h3 className="font-semibold mb-3">Publish to Sites *</h3>
+            <MultiSelectChips
+              items={sitesList}
+              selectedIds={form.siteIds}
+              onToggle={toggleSite}
+              label={(s) => `${s.name} (${s.language === "hi" ? "Hindi" : "English"})`}
+              emptyText="No sites available"
+            />
           </div>
 
           {/* Category */}
