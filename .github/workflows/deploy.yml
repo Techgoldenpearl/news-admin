@@ -1,12 +1,15 @@
 name: Deploy to EC2
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Build and push image"]
     branches: [main]
+    types: [completed]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Deploy admin panel
         uses: appleboy/ssh-action@v1.0.3
@@ -14,10 +17,9 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          command_timeout: 30m
+          command_timeout: 10m
           script: |
-            cd ~/news-platform/news-admin
-            git pull origin main
             cd ~/news-platform
-            docker compose -f docker-compose.prod.yml --env-file .env up -d --build admin
+            docker compose -f docker-compose.prod.yml --env-file .env pull admin
+            docker compose -f docker-compose.prod.yml --env-file .env up -d admin
             docker image prune -f
