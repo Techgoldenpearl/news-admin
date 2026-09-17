@@ -236,7 +236,7 @@ export default function AdsPage() {
                   </td>
                 </tr>
               ))}
-              {ads.length === 0 && <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No ads. Click "Create Ad" to add one.</td></tr>}
+              {ads.length === 0 && <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No ads. Click &ldquo;Create Ad&rdquo; to add one.</td></tr>}
             </tbody>
           </table>
         </div>
