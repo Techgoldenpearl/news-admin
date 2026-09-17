@@ -60,6 +60,8 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"content" | "seo" | "settings">("content");
+  const [newTagName, setNewTagName] = useState("");
+  const [creatingTag, setCreatingTag] = useState(false);
 
   useEffect(() => {
     categoriesApi.list({ activeOnly: "false" }).then((r) => setCategories(r.data));
@@ -201,6 +203,23 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
         ? prev.tagIds.filter((id) => id !== tagId)
         : [...prev.tagIds, tagId],
     }));
+  };
+
+  const createTag = async () => {
+    const name = newTagName.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
+    setCreatingTag(true);
+    try {
+      const res = await tagsApi.create({ name, slug });
+      setTags((prev) => [...prev, res.data].sort((a, b) => a.name.localeCompare(b.name)));
+      setForm((prev) => ({ ...prev, tagIds: [...prev.tagIds, res.data.id] }));
+      setNewTagName("");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to create tag");
+    } finally {
+      setCreatingTag(false);
+    }
   };
 
   const toggleSite = (siteId: number) => {
@@ -464,7 +483,7 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
           {/* Tags */}
           <div className="bg-white rounded-xl border p-5">
             <h3 className="font-semibold mb-3">Tags</h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-3">
               {tags.map((t) => (
                 <button key={t.id} type="button" onClick={() => toggleTag(t.id)}
                   className={`px-3 py-1 text-xs rounded-full border transition ${
@@ -473,7 +492,20 @@ export function ArticleForm({ articleId }: ArticleFormProps) {
                   {t.name}
                 </button>
               ))}
-              {tags.length === 0 && <p className="text-xs text-gray-400">No tags available</p>}
+              {tags.length === 0 && <p className="text-xs text-gray-400">No tags yet — add the first one below</p>}
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); createTag(); } }}
+                placeholder="New tag name..."
+                className="flex-1 px-3 py-1.5 border rounded-lg text-xs"
+              />
+              <button type="button" onClick={createTag} disabled={creatingTag || !newTagName.trim()}
+                className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-medium disabled:opacity-40">
+                {creatingTag ? "Adding..." : "+ Add"}
+              </button>
             </div>
           </div>
         </div>

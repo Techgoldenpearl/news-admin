@@ -84,6 +84,7 @@ export const mediaApi = {
     api.get("/media", { params }),
   upload: (data: { base64: string; fileName: string; mimeType: string }) =>
     api.post("/media/upload", data),
+  delete: (id: number) => api.delete(`/media/${id}`),
 };
 
 // Admin
@@ -99,6 +100,8 @@ export const adminApi = {
   pendingComments: () => api.get("/admin/comments/pending"),
   moderateComment: (id: number, status: string) =>
     api.patch(`/admin/comments/${id}/moderate`, { status }),
+  comments: (params?: Record<string, any>) => api.get("/admin/comments", { params }),
+  deleteComment: (id: number) => api.delete(`/admin/comments/${id}`),
   auditLogs: (params?: Record<string, any>) =>
     api.get("/admin/audit-logs", { params }),
   getLayout: (siteId: number, pageType: string) =>
@@ -124,6 +127,7 @@ export const reportersApi = {
     api.patch(`/reporters/admin/${id}/reject`, { note }),
   suspend: (id: number, note: string) =>
     api.patch(`/reporters/admin/${id}/suspend`, { note }),
+  reactivate: (id: number) => api.patch(`/reporters/admin/${id}/reactivate`),
   submissions: (params?: Record<string, any>) =>
     api.get("/reporters/admin/submissions", { params }),
   approveSubmission: (id: number, note?: string) =>
@@ -175,7 +179,9 @@ export const membershipApi = {
 
 // Tags
 export const tagsApi = {
-  list: () => api.get("/features/tags"),
+  // /features/tags is the public trending-ranked (limited, view-scored)
+  // endpoint — the admin picker needs every tag, hence the separate route.
+  list: () => api.get("/features/tags/all"),
   create: (data: any) => api.post("/features/tags", data),
 };
 
@@ -193,6 +199,8 @@ export const galleriesApi = {
   list: (params?: Record<string, any>) => api.get("/features/photo-galleries", { params }),
   get: (slug: string) => api.get(`/features/photo-galleries/${slug}`),
   create: (data: any) => api.post("/features/photo-galleries", data),
+  update: (id: number, data: any) => api.put(`/features/photo-galleries/${id}`, data),
+  delete: (id: number) => api.delete(`/features/photo-galleries/${id}`),
 };
 
 // Live Blogs

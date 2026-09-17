@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { reportersApi } from "@/lib/api";
-import { CheckCircle, XCircle, Ban, FileText } from "lucide-react";
+import { CheckCircle, XCircle, Ban, FileText, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -28,6 +28,11 @@ export default function ReportersPage() {
     if (!note) return;
     try { await reportersApi.suspend(id, note); toast.success("Suspended"); fetch(); }
     catch { toast.error("Failed to suspend"); }
+  };
+  const reactivate = async (id: number) => {
+    if (!confirm("Reactivate this reporter?")) return;
+    try { await reportersApi.reactivate(id); toast.success("Reactivated"); fetch(); }
+    catch { toast.error("Failed to reactivate"); }
   };
 
   const tabs = ["all", "pending", "active", "suspended", "rejected"];
@@ -90,6 +95,9 @@ export default function ReportersPage() {
                   )}
                   {r.status === "active" && (
                     <button onClick={() => suspend(r.id)} className="text-orange-500 p-1" title="Suspend"><Ban size={16} /></button>
+                  )}
+                  {r.status === "suspended" && (
+                    <button onClick={() => reactivate(r.id)} className="text-blue-600 p-1" title="Reactivate"><RotateCcw size={16} /></button>
                   )}
                 </td>
               </tr>

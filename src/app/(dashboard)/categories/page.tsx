@@ -21,6 +21,13 @@ export default function CategoriesPage() {
 
   const siteName = (siteId: number | null) => sites.find((s) => s.id === siteId)?.name;
 
+  const generateSlug = (name: string) =>
+    name.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim();
+
+  const handleNameChange = (name: string) => {
+    setForm((prev) => ({ ...prev, name, slug: editing ? prev.slug : generateSlug(name) }));
+  };
+
   const toggleFormSite = (siteId: string) => {
     setForm((prev) => ({
       ...prev,
@@ -92,7 +99,7 @@ export default function CategoriesPage() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border p-6 mb-6 grid grid-cols-2 gap-4">
-          <input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="px-3 py-2 border rounded-lg" />
+          <input placeholder="Name" value={form.name} onChange={(e) => handleNameChange(e.target.value)} required className="px-3 py-2 border rounded-lg" />
           <input placeholder="Name Hindi" value={form.nameHindi} onChange={(e) => setForm({ ...form, nameHindi: e.target.value })} className="px-3 py-2 border rounded-lg" />
           <input placeholder="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required className="px-3 py-2 border rounded-lg" />
           <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-10 w-20" />

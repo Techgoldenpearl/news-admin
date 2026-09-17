@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { shokSandeshApi, statesApi, citiesApi } from "@/lib/api";
+import { shokSandeshApi, statesApi, citiesApi, sitesApi } from "@/lib/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, Check, X, Pencil, Trash2, Search, Eye, Heart } from "lucide-react";
@@ -33,15 +33,19 @@ export default function ShokSandeshPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<any>({
-    type: "shok_sandesh", deceasedName: "", deceasedNameHindi: "", deceasedAge: "",
+    siteId: "", type: "shok_sandesh", deceasedName: "", deceasedNameHindi: "", deceasedAge: "",
     dateOfDeath: "", place: "", city: "", state: "", familyName: "", familyNameHindi: "",
     message: "", messageHindi: "", eventDetails: "", eventDetailsHindi: "",
     eventDate: "", eventPlace: "", deceasedPhoto: "", isHomepage: false,
   });
   const [states, setStates] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
+  const [sitesList, setSitesList] = useState<any[]>([]);
 
-  useEffect(() => { statesApi.list().then((r) => setStates(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    statesApi.list().then((r) => setStates(r.data)).catch(() => {});
+    sitesApi.list().then((r) => setSitesList(r.data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const matchedState = states.find((s) => s.name === form.state);
@@ -63,9 +67,10 @@ export default function ShokSandeshPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.deceasedName || !form.type) { toast.error("Name and type required"); return; }
+    if (!editingId && !form.siteId) { toast.error("Site is required"); return; }
     setSaving(true);
     try {
-      const data = { ...form, deceasedAge: form.deceasedAge ? parseInt(form.deceasedAge) : null };
+      const data = { ...form, siteId: form.siteId ? parseInt(form.siteId) : null, deceasedAge: form.deceasedAge ? parseInt(form.deceasedAge) : null };
       if (editingId) {
         await shokSandeshApi.update(editingId, data);
         toast.success("Updated");
@@ -205,10 +210,18 @@ export default function ShokSandeshPage() {
         <form onSubmit={handleSave} className="max-w-3xl space-y-6">
           <div className="bg-white rounded-xl border p-6 space-y-4">
             <h2 className="font-semibold text-lg">{editingId ? "Edit Entry" : "New शोक संदेश / श्रद्धांजलि"}</h2>
-            <div><label className="block text-sm font-medium mb-1">Type *</label>
-              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
-                {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="block text-sm font-medium mb-1">Site *</label>
+                <select value={String(form.siteId ?? "")} onChange={(e) => setForm({ ...form, siteId: e.target.value })} className="w-full px-3 py-2 border rounded-lg" required>
+                  <option value="">Select site</option>
+                  {sitesList.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div><label className="block text-sm font-medium mb-1">Type *</label>
+                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
+                  {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
             </div>
           </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { classifiedsApi, statesApi, citiesApi } from "@/lib/api";
+import { classifiedsApi, statesApi, citiesApi, sitesApi } from "@/lib/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Plus, Check, X, Pencil, Trash2, Search, Eye, AlertTriangle } from "lucide-react";
@@ -36,7 +36,7 @@ export default function ClassifiedsPage() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"list" | "create">("list");
   const [form, setForm] = useState<any>({
-    category: "property", title: "", titleHindi: "", description: "", descriptionHindi: "",
+    siteId: "", category: "property", title: "", titleHindi: "", description: "", descriptionHindi: "",
     price: "", contactName: "", contactPhone: "", contactWhatsapp: "", city: "", area: "", state: "",
     isFeatured: false, isUrgent: false, isHomepage: false,
   });
@@ -44,8 +44,12 @@ export default function ClassifiedsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [states, setStates] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
+  const [sitesList, setSitesList] = useState<any[]>([]);
 
-  useEffect(() => { statesApi.list().then((r) => setStates(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    statesApi.list().then((r) => setStates(r.data)).catch(() => {});
+    sitesApi.list().then((r) => setSitesList(r.data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const matchedState = states.find((s) => s.name === form.state);
@@ -67,17 +71,19 @@ export default function ClassifiedsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.category) { toast.error("Title and category required"); return; }
+    if (!editingId && !form.siteId) { toast.error("Site is required"); return; }
     setSaving(true);
     try {
+      const payload = { ...form, siteId: form.siteId ? parseInt(form.siteId) : null };
       if (editingId) {
-        await classifiedsApi.update(editingId, form);
+        await classifiedsApi.update(editingId, payload);
         toast.success("Ad updated");
       } else {
-        await classifiedsApi.create(form);
+        await classifiedsApi.create(payload);
         toast.success("Ad created & published");
       }
       setTab("list"); setEditingId(null); loadAds();
-      setForm({ category: "property", title: "", titleHindi: "", description: "", descriptionHindi: "", price: "", contactName: "", contactPhone: "", contactWhatsapp: "", city: "", area: "", state: "", isFeatured: false, isUrgent: false, isHomepage: false });
+      setForm({ siteId: "", category: "property", title: "", titleHindi: "", description: "", descriptionHindi: "", price: "", contactName: "", contactPhone: "", contactWhatsapp: "", city: "", area: "", state: "", isFeatured: false, isUrgent: false, isHomepage: false });
     } catch (err: any) { toast.error(err.response?.data?.error || "Failed to save"); }
     finally { setSaving(false); }
   };
@@ -200,6 +206,12 @@ export default function ClassifiedsPage() {
           <div className="bg-white rounded-xl border p-6 space-y-4">
             <h2 className="font-semibold text-lg">{editingId ? "Edit Ad" : "Create New Classified Ad"}</h2>
             <div className="grid grid-cols-2 gap-4">
+              <div><label className="block text-sm font-medium mb-1">Site *</label>
+                <select value={String(form.siteId ?? "")} onChange={(e) => setForm({ ...form, siteId: e.target.value })} className="w-full px-3 py-2 border rounded-lg" required>
+                  <option value="">Select site</option>
+                  {sitesList.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
               <div><label className="block text-sm font-medium mb-1">Category *</label>
                 <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
                   {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
