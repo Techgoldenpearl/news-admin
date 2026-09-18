@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { shokSandeshApi, statesApi, citiesApi, sitesApi } from "@/lib/api";
+import { shokSandeshApi, statesApi, citiesApi, sitesApi, mediaApi } from "@/lib/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Plus, Check, X, Pencil, Trash2, Search, Eye, Heart } from "lucide-react";
+import { Plus, Check, X, Pencil, Trash2, Search, Eye, Heart, Upload } from "lucide-react";
 
 const TYPES = [
   { value: "shok_sandesh", label: "शोक संदेश" },
@@ -41,6 +41,7 @@ export default function ShokSandeshPage() {
   const [states, setStates] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
   const [sitesList, setSitesList] = useState<any[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
     statesApi.list().then((r) => setStates(r.data)).catch(() => {});
@@ -63,6 +64,32 @@ export default function ShokSandeshPage() {
   };
 
   useEffect(() => { loadItems(); }, [page, status, typeFilter]);
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("File too large (max 10MB)"); return; }
+    setUploadingPhoto(true);
+    try {
+      const base64 = await fileToBase64(file);
+      const res = await mediaApi.upload({ base64, fileName: file.name, mimeType: file.type });
+      setForm((prev: any) => ({ ...prev, deceasedPhoto: res.data.url }));
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = "";
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,8 +268,33 @@ export default function ShokSandeshPage() {
                 <input type="date" value={form.dateOfDeath} onChange={(e) => setForm({ ...form, dateOfDeath: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
               </div>
             </div>
-            <div><label className="block text-sm font-medium mb-1">Photo URL</label>
-              <input value={form.deceasedPhoto} onChange={(e) => setForm({ ...form, deceasedPhoto: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="https://..." />
+            <div>
+              <label className="block text-sm font-medium mb-1">Photo</label>
+              {form.deceasedPhoto ? (
+                <div className="relative w-32">
+                  <img src={form.deceasedPhoto} alt="Deceased" className="w-32 h-32 rounded-lg object-cover border" />
+                  <button type="button" onClick={() => setForm({ ...form, deceasedPhoto: "" })}
+                    className="absolute top-1.5 right-1.5 bg-red-500 text-white p-1 rounded-full hover:bg-red-600">
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : uploadingPhoto ? (
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 w-32 h-32">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-200 border-t-blue-600 mb-1.5" />
+                  <span className="text-xs text-blue-600">Uploading...</span>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 w-32 h-32 cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition">
+                  <Upload size={20} className="text-gray-400 mb-1.5" />
+                  <span className="text-xs text-gray-600 font-medium text-center">Click to upload</span>
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                </label>
+              )}
+              <div className="mt-2 max-w-sm">
+                <p className="text-xs text-gray-400 mb-1">Or paste image URL:</p>
+                <input value={form.deceasedPhoto} onChange={(e) => setForm({ ...form, deceasedPhoto: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg text-xs" placeholder="https://example.com/photo.jpg" />
+              </div>
             </div>
           </div>
 

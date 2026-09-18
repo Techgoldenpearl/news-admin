@@ -55,29 +55,30 @@ export default function ReportersPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">ID</th>
-              <th className="text-left px-4 py-3 font-medium">Name</th>
-              <th className="text-left px-4 py-3 font-medium">Email</th>
-              <th className="text-left px-4 py-3 font-medium">Beat</th>
-              <th className="text-left px-4 py-3 font-medium">City</th>
-              <th className="text-left px-4 py-3 font-medium">Status</th>
-              <th className="text-left px-4 py-3 font-medium">Articles</th>
-              <th className="text-left px-4 py-3 font-medium">Actions</th>
+              <th className="text-left px-3 py-3 font-medium">Name</th>
+              <th className="text-left px-3 py-3 font-medium">Email</th>
+              <th className="text-left px-3 py-3 font-medium">Beat</th>
+              <th className="text-left px-3 py-3 font-medium">City</th>
+              <th className="text-left px-3 py-3 font-medium">Status</th>
+              <th className="text-left px-3 py-3 font-medium">Articles</th>
+              <th className="text-left px-3 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {reporters.map((r) => (
               <tr key={r.id} className="border-b hover:bg-gray-50">
-                <td className="px-4 py-3 text-xs text-gray-400">{r.employeeId}</td>
-                <td className="px-4 py-3 font-medium">{r.name}</td>
-                <td className="px-4 py-3 text-gray-500">{r.email}</td>
-                <td className="px-4 py-3 text-gray-500">{r.beat}</td>
-                <td className="px-4 py-3 text-gray-500">{r.city}</td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 font-medium">
+                  {r.name}
+                  <div className="text-xs text-gray-400 font-normal">{r.employeeId}</div>
+                </td>
+                <td className="px-3 py-3 text-gray-500">{r.email}</td>
+                <td className="px-3 py-3 text-gray-500">{r.beat}</td>
+                <td className="px-3 py-3 text-gray-500">{r.city}</td>
+                <td className="px-3 py-3">
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                     r.status === "active" ? "bg-green-100 text-green-700" :
                     r.status === "pending" ? "bg-yellow-100 text-yellow-700" :
@@ -85,8 +86,8 @@ export default function ReportersPage() {
                     "bg-gray-100 text-gray-700"
                   }`}>{r.status}</span>
                 </td>
-                <td className="px-4 py-3">{r.approvedCount}/{r.submissionsCount}</td>
-                <td className="px-4 py-3 flex gap-1">
+                <td className="px-3 py-3">{r.approvedCount}/{r.submissionsCount}</td>
+                <td className="px-3 py-3 flex gap-1">
                   {r.status === "pending" && (
                     <>
                       <button onClick={() => approve(r.id)} className="text-green-600 p-1" title="Approve"><CheckCircle size={16} /></button>

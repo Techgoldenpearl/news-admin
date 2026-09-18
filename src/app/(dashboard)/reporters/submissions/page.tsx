@@ -16,6 +16,20 @@ export default function ReporterSubmissionsPage() {
 
   useEffect(() => { fetchSubmissions(); }, [tab]);
 
+  useEffect(() => {
+    if (!selected) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelected(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [selected]);
+
   const approve = async (id: number) => {
     try {
       await reportersApi.approveSubmission(id);
