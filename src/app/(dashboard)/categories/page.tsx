@@ -65,8 +65,8 @@ export default function CategoriesPage() {
 
       toast.success(editing ? "Updated" : "Created");
       setShowForm(false); setEditing(null); setForm(defaultForm); fetch();
-    } catch {
-      toast.error("Failed");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed");
     } finally {
       setSavingForm(false);
     }

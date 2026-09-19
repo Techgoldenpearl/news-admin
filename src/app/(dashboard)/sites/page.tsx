@@ -22,7 +22,7 @@ export default function SitesPage() {
       setShowForm(false);
       setForm({ name: "", slug: "", domain: "", language: "hi", region: "", description: "" });
       fetch();
-    } catch { toast.error("Failed to create site"); }
+    } catch (err: any) { toast.error(err.response?.data?.error || "Failed to create site"); }
   };
 
   const handleDelete = async (site: any) => {

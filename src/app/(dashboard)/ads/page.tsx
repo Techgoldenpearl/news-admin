@@ -72,7 +72,7 @@ export default function AdsPage() {
       setTab("ads");
       resetForm();
       fetchAll();
-    } catch { toast.error("Failed"); }
+    } catch (err: any) { toast.error(err.response?.data?.error || "Failed"); }
   };
 
   const handleDelete = async (id: number) => {

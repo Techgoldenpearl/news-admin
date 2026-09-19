@@ -43,7 +43,7 @@ export default function EditSitePage() {
     try {
       await sitesApi.update(parseInt(id as string), form);
       toast.success("Site updated");
-    } catch { toast.error("Failed to save"); }
+    } catch (err: any) { toast.error(err.response?.data?.error || "Failed to save"); }
     finally { setSaving(false); }
   };
 
